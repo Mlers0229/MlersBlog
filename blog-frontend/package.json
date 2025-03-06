@@ -1,0 +1,45 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxtjs/tailwindcss": "^6.13.1",
+    "@pinia/nuxt": "^0.10.1",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
+    "@vueuse/core": "^12.7.0",
+    "autoprefixer": "^10.4.20",
+    "axios": "^1.8.1",
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
+    "editor.md": "^1.5.0",
+    "jquery": "^3.7.1",
+    "markdown-it": "^14.1.0",
+    "markdown-it-prism": "^2.3.0",
+    "nuxt": "^3.15.4",
+    "pinia": "^3.0.1",
+    "postcss": "^8.5.3",
+    "prismjs": "^1.29.0",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@element-plus/nuxt": "^1.1.1",
+    "element-plus": "^2.9.5",
+    "tailwindcss": "^3.3.0"
+  },
+  "version": "1.0.0",
+  "description": "Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.",
+  "main": "postcss.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
