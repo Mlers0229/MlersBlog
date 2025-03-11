@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { auth as authApi } from '~/api/auth';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -26,37 +27,18 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
       
       try {
-        // 实际项目中调用API进行登录
-        // const response = await $fetch('/api/auth/login', {
-        //   method: 'POST',
-        //   body: { username, password }
-        // });
-        
-        // 模拟登录成功响应
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const response = {
-          code: 200,
-          data: {
-            token: 'mock_token_' + Date.now(),
-            user: {
-              id: 1,
-              username: username,
-              nickname: username === 'admin' ? '管理员' : '普通用户',
-              avatar: null,
-              role: username === 'admin' ? 'ADMIN' : 'USER'
-            }
-          }
-        };
+        // 调用实际API进行登录
+        const response = await authApi.login({ username, password });
         
         // 登录成功，存储token和用户信息
-        this.setToken(response.data.token);
-        this.setUser(response.data.user);
+        this.setToken(response.token);
+        this.setUser(response.user);
         
         return response;
       } catch (error) {
         console.error('登录失败:', error);
-        this.error = error.message || '登录失败，请稍后重试';
-        throw error;
+        this.error = error.response?.data?.message || '登录失败，请稍后重试';
+        throw new Error(this.error);
       } finally {
         this.loading = false;
       }
@@ -68,38 +50,22 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
       
       try {
-        // 实际项目中调用API进行注册
-        // const response = await $fetch('/api/auth/register', {
-        //   method: 'POST',
-        //   body: { username, password, nickname, email }
-        // });
+        // 调用实际API进行注册
+        const response = await authApi.register({ 
+          username, 
+          password, 
+          nickname, 
+          email 
+        });
         
-        // 模拟注册成功响应
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const response = {
-          code: 200,
-          data: {
-            token: 'mock_token_' + Date.now(),
-            user: {
-              id: Date.now(),
-              username,
-              nickname: nickname || username,
-              email,
-              avatar: null,
-              role: 'USER'
-            }
-          }
-        };
-        
-        // 注册成功，存储token和用户信息
-        this.setToken(response.data.token);
-        this.setUser(response.data.user);
+        // 注册成功后自动登录
+        await this.login({ username, password });
         
         return response;
       } catch (error) {
         console.error('注册失败:', error);
-        this.error = error.message || '注册失败，请稍后重试';
-        throw error;
+        this.error = error.response?.data?.message || '注册失败，请稍后重试';
+        throw new Error(this.error);
       } finally {
         this.loading = false;
       }
@@ -107,8 +73,6 @@ export const useAuthStore = defineStore('auth', {
     
     // 退出登录
     logout() {
-      // 实际项目中可能需要调用API
-      
       // 清除状态
       this.token = null;
       this.user = null;
@@ -118,6 +82,9 @@ export const useAuthStore = defineStore('auth', {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
+      
+      // 调用API的登出方法
+      authApi.logout();
     },
     
     // 获取当前用户信息
@@ -127,29 +94,10 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true;
       
       try {
-        // 实际项目中调用API获取用户信息
-        // const response = await $fetch('/api/users/me', {
-        //   method: 'GET',
-        //   headers: {
-        //     Authorization: `Bearer ${this.token}`
-        //   }
-        // });
-        
-        // 模拟获取用户信息成功
-        await new Promise(resolve => setTimeout(resolve, 400));
-        const response = {
-          code: 200,
-          data: this.user || {
-            id: 1,
-            username: 'user',
-            nickname: '用户',
-            avatar: null,
-            role: 'USER'
-          }
-        };
-        
-        this.setUser(response.data);
-        return response.data;
+        // 调用API获取用户信息
+        const user = await authApi.getCurrentUser();
+        this.setUser(user);
+        return user;
       } catch (error) {
         console.error('获取用户信息失败:', error);
         // 如果是401错误，清除token和用户信息
@@ -190,6 +138,9 @@ export const useAuthStore = defineStore('auth', {
           try {
             if (userStr) {
               this.user = JSON.parse(userStr);
+            } else {
+              // 如果有token但没有用户信息，尝试获取
+              this.fetchCurrentUser();
             }
           } catch (e) {
             console.error('解析用户信息失败:', e);
