@@ -167,57 +167,22 @@ const fetchPosts = async () => {
   loading.value = true;
   
   try {
-    // 调用API获取文章列表
-    // const response = await $fetch('/api/posts', {
-    //   method: 'GET',
-    //   query: {
-    //     page: currentPage.value - 1, // 后端通常是0-indexed
-    //     size: pageSize.value,
-    //     sort: getSortParam(),
-    //     category: activeCategory.value === '全部' ? '' : activeCategory.value
-    //   }
-    // });
+    // 调用实际API获取文章列表
+    const { posts: postApi } = await import('~/api/post');
     
-    // if (response.code === 200) {
-    //   posts.value = response.data.content;
-    //   totalPages.value = response.data.totalPages;
-    // }
+    const response = await postApi.getPosts(
+      currentPage.value - 1, // 后端通常是0-indexed
+      pageSize.value
+    );
     
-    // 模拟数据
-    setTimeout(() => {
-      const mockPosts = Array.from({ length: 10 }, (_, i) => ({
-        id: i + 1,
-        title: '如何使用Nuxt 3构建高性能博客系统' + (i + 1),
-        content: '这是一篇介绍如何使用Nuxt 3构建现代化博客系统的文章。Nuxt 3是Vue.js最新的服务器端渲染框架，它提供了许多强大的功能，如自动代码分割、静态站点生成、服务器端渲染等。本文将详细介绍如何从零开始搭建一个Nuxt 3博客系统，包括项目初始化、路由配置、数据获取、页面组件开发等内容。',
-        summary: '这是一篇介绍如何使用Nuxt 3构建现代化博客系统的文章。',
-        coverImage: i % 3 === 0 ? 'https://picsum.photos/id/' + (i + 30) + '/800/450' : '',
-        createdAt: new Date(Date.now() - i * 86400000).toISOString(),
-        views: Math.floor(Math.random() * 1000),
-        comments: Math.floor(Math.random() * 50),
-        likes: Math.floor(Math.random() * 100),
-        category: ['技术', '设计', '生活'][i % 3],
-        author: {
-          name: '博主',
-          avatar: 'https://randomuser.me/api/portraits/men/1.jpg'
-        }
-      }));
-      
-      posts.value = mockPosts;
-      totalPages.value = 5;
-      loading.value = false;
-    }, 800);
-    
+    posts.value = response.content || [];
+    totalPages.value = response.totalPages || 1;
   } catch (error) {
     console.error('获取文章列表失败:', error);
-    // 使用模拟数据
     posts.value = [];
     totalPages.value = 0;
   } finally {
-    if (process.client) {
-      setTimeout(() => {
-        loading.value = false;
-      }, 800);
-    }
+    loading.value = false;
   }
 };
 

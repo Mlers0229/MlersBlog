@@ -1,7 +1,7 @@
 # Read Me First
 The following was discovered as part of building this project:
 
-* The original package name 'com.mlers.blog.blog-backend' is invalid and this project uses 'com.mlers.blog.blog_backend' instead.
+* The original package name 'com.mlersblog.blog.blog-backend' is invalid and this project uses 'com.mlersblog.blog.blog_backend' instead.
 
 # Getting Started
 

@@ -266,151 +266,33 @@ const renderMarkdown = async () => {
 };
 
 // 获取文章详情
-const fetchPostDetails = async () => {
+const fetchPost = async () => {
   loading.value = true;
   
   try {
-    console.log(`开始获取文章详情，ID: ${route.params.id}`);
+    // 从API获取文章详情
+    const { posts: postApi } = await import('~/api/post');
+    const response = await postApi.getPostById(route.params.id);
     
-    // 尝试从本地存储获取文章
-    if (process.client && window.localStorage) {
-      try {
-        const mockPosts = JSON.parse(localStorage.getItem('mockPosts') || '[]');
-        const mockPost = mockPosts.find(p => p.id.toString() === route.params.id.toString());
-        
-        if (mockPost) {
-          console.log('从localStorage获取到文章:', mockPost);
-          post.value = mockPost;
-          
-          // 如果已经有渲染好的HTML内容，直接使用
-          if (!post.value.contentHtml && post.value.content) {
-            console.log('需要渲染Markdown内容');
-            await renderMarkdown();
-          } else {
-            console.log('使用已有的HTML内容:', post.value.contentHtml?.substring(0, 100) + '...');
-          }
-          
-          loading.value = false;
-          return;
-        }
-      } catch (storageError) {
-        console.error('从localStorage获取文章失败:', storageError);
-      }
-    }
-    
-    // 尝试从API获取文章详情
-    try {
-      const response = await $fetch(`/api/posts/${route.params.id}`, {
-        method: 'GET'
-      });
-      
-      if (response.code === 200) {
-        console.log('从API获取文章成功:', response.data);
-        post.value = response.data;
-        await renderMarkdown();
-        
-        // 在文章数据加载完成后，设置点赞和收藏状态
-        if (post.value) {
-          // 如果用户登录了，获取点赞和收藏状态
-          if (authStore.isLoggedIn) {
-            const userId = authStore.user?.id || 1;
-            post.value.isLiked = interactionStore.isPostLiked(post.value.id, userId);
-            post.value.isFavorited = interactionStore.isPostFavorited(post.value.id, userId);
-          }
-          
-          // 获取点赞和收藏数量
-          post.value.likes = interactionStore.getPostLikeCount(post.value.id);
-          post.value.favorites = interactionStore.getPostFavoriteCount(post.value.id);
-        }
-        
-        loading.value = false;
-        return;
-      } else {
-        throw new Error(response.message || '获取文章失败');
-      }
-    } catch (apiError) {
-      console.error('从API获取文章详情失败:', apiError);
-    }
-    
-    // 模拟API调用
-    console.log('使用模拟文章数据');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // 模拟文章数据
-    post.value = {
-      id: route.params.id,
-      title: '如何使用Nuxt 3构建高性能博客系统',
-      content: `# 如何使用Nuxt 3构建高性能博客系统
-
-## 简介
-
-Nuxt 3是一个基于Vue 3的SSR框架，提供了很多开箱即用的功能，如自动路由、服务器端渲染、API处理等。
-
-## 安装
-
-\`\`\`bash
-npx nuxi init my-blog
-cd my-blog
-npm install
-npm run dev
-\`\`\`
-
-## 代码示例
-
-下面是一个简单的Nuxt 3组件:
-
-\`\`\`vue
-<template>
-  <div>
-    <h1>{{ title }}</h1>
-    <p>{{ description }}</p>
-  </div>
-</template>
-
-<script setup>
-const title = ref('Hello Nuxt 3');
-const description = ref('Welcome to our blog!');
-<\/script>
-\`\`\`
-
-![Nuxt 3 Logo](https://nuxt.com/assets/design-kit/logo/icon-green.svg)
-      `,
-      contentHtml: '', // 将在代码中动态生成
-      summary: 'Nuxt 3是Vue 3的服务器端渲染框架，本文将详细介绍如何使用Nuxt 3构建一个功能完善的博客系统。',
-      coverImage: 'https://picsum.photos/800/400',
-      createdAt: new Date().toISOString(),
-      viewCount: Math.floor(Math.random() * 1000),
-      likes: Math.floor(Math.random() * 100),
-      favorites: Math.floor(Math.random() * 50),
-      isLiked: false,
-      isFavorited: false,
-      author: {
-        id: 1,
-        nickname: '示例作者',
-        avatar: null // 使用默认头像
-      },
-      tags: [
-        { id: 1, name: 'Vue' },
-        { id: 2, name: 'JavaScript' },
-        { id: 3, name: 'Nuxt' }
-      ],
-      comments: [
-        {
-          id: 1,
-          content: '这是一条示例评论，评论功能非常好用！',
-          createdAt: new Date().toISOString(),
-          user: {
-            id: 2,
-            nickname: '热心读者',
-            avatar: null
-          }
-        }
-      ]
-    };
-    
-    // 渲染Markdown内容为HTML
+    post.value = response;
     await renderMarkdown();
     
+    // 在文章数据加载完成后，设置点赞和收藏状态
+    if (post.value) {
+      // 如果用户登录了，获取点赞和收藏状态
+      if (authStore.isLoggedIn) {
+        const userId = authStore.user?.id || 1;
+        post.value.isLiked = interactionStore.isPostLiked(post.value.id, userId);
+        post.value.isFavorited = interactionStore.isPostFavorited(post.value.id, userId);
+      }
+      
+      // 获取点赞和收藏数量
+      post.value.likes = interactionStore.getPostLikeCount(post.value.id);
+      post.value.favorites = interactionStore.getPostFavoriteCount(post.value.id);
+    }
+  } catch (error) {
+    console.error('获取文章详情失败:', error);
+    showError({ statusCode: 404, message: '文章不存在或已被删除' });
   } finally {
     loading.value = false;
   }
@@ -625,7 +507,7 @@ const showFavoritedUsers = () => {
 };
 
 onMounted(() => {
-  fetchPostDetails();
+  fetchPost();
 });
 </script>
 
